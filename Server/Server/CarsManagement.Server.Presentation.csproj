@@ -58,7 +58,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\Client\Presentation\CarsManagement.Client.csproj" />
+		<ProjectReference Include="..\..\Client\CarsManagement.Client.csproj" />
 		<ProjectReference Include="..\Application\CarsManagement.Server.Application.csproj" />
 	</ItemGroup>
 

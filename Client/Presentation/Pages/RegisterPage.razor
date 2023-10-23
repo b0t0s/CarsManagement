@@ -1,0 +1,78 @@
+﻿@page "/register"
+@using CarsManagement.Shared.DTO
+@using System.Text.Json
+@using System.Text
+@inject HttpClient http
+@inject NavigationManager NavManager
+
+<div class="d-flex justify-content-center align-items-center vh-50 vw-50">
+    <div class="card">
+        <div class="card-body">
+            <form @onsubmit="HandleRegister">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" @bind="Username" placeholder="Enter your username">
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="text" class="form-control" id="email" @bind="Email" placeholder="Enter your mail">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" @bind="Password" placeholder="Enter your password">
+                </div>
+
+                <div class="mb-3">
+                    <div class="badge badge-primary text-wrap p-3">
+                        <p class="text-justify text-uppercase font-weight-bolder text-monospace text-dark" style="font-size: 16px">@RegisterResponse</p>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary border border-white justify-self-center mx-3">Submit registration</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string Username { get; set; }
+    private string Email { get; set; }
+    private string Password { get; set; }
+
+    private string RegisterResponse { get; set; }
+
+    private async Task HandleRegister()
+    {
+
+        Console.WriteLine("HandleRegister method invoked.");
+
+        var registerRequest = new RegistrationRequest(Username, Email, Password);
+
+        Console.WriteLine($"Creating request object: {JsonSerializer.Serialize(registerRequest)}");
+
+        var jsonContent = new StringContent(JsonSerializer.Serialize(registerRequest), Encoding.UTF8, "application/json");
+
+        Console.WriteLine("Sending registration request to server...");
+
+        var response = await http.PostAsync("/auth/register", jsonContent);
+
+        Console.WriteLine($"Received response: {response.StatusCode.ToString()}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Registration successful. Redirecting to login page...");
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            RegisterResponse = responseContent;
+
+            NavManager.NavigateTo("/login");
+        }
+        else
+        {
+            Console.WriteLine("Registration failed.");
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            RegisterResponse = responseContent;
+        }
+    }
+}

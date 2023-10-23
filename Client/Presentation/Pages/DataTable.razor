@@ -1,0 +1,195 @@
+﻿@page "/DataTable"
+@using CarsManagement.Shared.DTO
+@inject HttpClient http
+
+<PageTitle>DataTable</PageTitle>
+
+<h1>DataTable</h1>
+
+<button class="btn btn-primary" @onclick="LoadData">Load Data</button>
+<button class="btn btn-secondary" @onclick="ToggleView">Toggle View</button>
+
+<div class="horizontal-divider"></div>
+
+@if (IsListView)
+{
+    @if (Managers != null)
+    {
+        @if (Managers != null)
+        {
+            <div class="card-deck mb-4">
+                @foreach (var manager in Managers)
+                {
+                    <div class="card m-3">
+                        <div class="card-header">
+                            <h5 class="card-title">@manager.AccountName</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (manager.ManagedParkingLots != null && manager.ManagedParkingLots.Any())
+                            {
+                                <p><strong>Managed Parking Lots:</strong></p>
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Lot ID</th>
+                                        <th>Spots</th>
+                                        <th>Parked</th>
+                                        <th>Inclusive Occupied</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var lot in manager.ManagedParkingLots)
+                                    {
+                                        <tr>
+                                            <td>@lot?.LotId</td>
+                                            <td>@lot?.ParkingSpots?.Count</td>
+                                            <td>@lot?.ParkingSpots?.Count(spot => spot.IsOccupied)</td>
+                                            <td>@lot?.ParkingSpots?.Count(spot => spot.IsOccupied && spot.IsInclusive)</td> <!-- New cell for inclusive occupied spots count -->
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            }
+                            else
+                            {
+                                <p>No managed parking lots available.</p>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+}
+else
+{
+    if (Managers != null)
+    {
+        <div class="row">
+            @foreach (var manager in Managers)
+            {
+                <div class="col-md-4">
+                    <div class="card m-3">
+                        <div class="card-header">
+                            <h5 class="card-title">@manager.AccountName</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (manager.ManagedParkingLots != null && manager.ManagedParkingLots.Any())
+                            {
+                                <p><strong>Managed Parking Lots:</strong></p>
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Lot ID</th>
+                                        <th>Spots</th>
+                                        <th>Parked</th>
+                                        <th>Inclusive Occupied</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var lot in manager.ManagedParkingLots)
+                                    {
+                                        <tr>
+                                            <td>@lot?.LotId</td>
+                                            <td>@lot?.ParkingSpots?.Count</td>
+                                            <td>@lot?.ParkingSpots?.Count(spot => spot.IsOccupied)</td>
+                                            <td>@lot?.ParkingSpots?.Count(spot => spot.IsOccupied && spot.IsInclusive)</td> <!-- New cell for inclusive occupied spots count -->
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            }
+                            else
+                            {
+                                <p>No managed parking lots available.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@if (Cars != null)
+{
+    <h2>Cars Data</h2>
+    <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+        <tr>
+            <th>Car ID</th>
+            <th>Brand</th>
+            <th>Model</th>
+            <th>License Plate</th>
+            <th>Amount Paid</th>
+            <th>Entry Time</th>
+            <th>Exit Time</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var car in Cars)
+        {
+            <tr>
+                <td>@car?.CarId</td>
+                <td>@car?.Brand</td>
+                <td>@car?.Model</td>
+                <td>@car?.LicensePlate</td>
+                <td>@car?.Ticket?.AmountPaid</td>
+                <td>@car?.Ticket?.EntryTime (@GetTimeDifference(@car?.Ticket?.EntryTime ?? DateTime.Now, false))</td>
+                <td>@car?.Ticket?.ExitTime (In @GetTimeDifference(@car?.Ticket?.ExitTime ?? DateTime.Now, true))</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+@code {
+    private bool IsListView { get; set; } = true;
+
+    private Timer _timer;  // Timer to update the page
+
+    private List<ManagerDTO> Managers { get; set; } = new List<ManagerDTO>();
+    private List<ParkingLotDTO> Lots { get; set; } = new List<ParkingLotDTO>();
+    private List<ParkingSpotDTO> Spots { get; set; } = new List<ParkingSpotDTO>();
+    private List<CarDTO> Cars { get; set; } = new List<CarDTO>();
+
+    protected override void OnInitialized()
+    {
+        _timer = new Timer(Update, null, 0, 60000);  // Update every minute
+    }
+
+    private void Update(object? state)
+    {
+        StateHasChanged();  // Request a re-render
+    }
+
+    private string GetTimeDifference(DateTime dateTime, bool isFuture)
+    {
+        var timeSpan = isFuture ? dateTime - DateTime.Now : DateTime.Now - dateTime;
+        var daysPart = timeSpan.Days > 0 ? $"{timeSpan.Days} day{(timeSpan.Days > 1 ? "s" : "")}, " : "";
+        var timePart = $"{timeSpan.Hours:D2}:{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}";
+        return $"{daysPart}{timePart}";
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();  // Clean up the Timer when the component is disposed
+    }
+
+    private async Task LoadData()
+    {
+        var managers = await http.GetFromJsonAsync<List<ManagerDTO>>("/Managers");
+        var lots = await http.GetFromJsonAsync<List<ParkingLotDTO>>("/Lots");
+        var spots = await http.GetFromJsonAsync<List<ParkingSpotDTO>>("/Spots");
+        var cars = await http.GetFromJsonAsync<List<CarDTO>>("/Cars");
+
+        if (managers != null) Managers.AddRange(managers.OrderByDescending(x => x.ManagedParkingLots.Count));
+        if (lots != null) Lots.AddRange(lots.OrderByDescending(x => x.ParkingSpots.Count));
+        if (spots != null) Spots.AddRange(spots);
+        if (cars != null) Cars.AddRange(cars.OrderByDescending(x => DateTime.Now - x.Ticket.ExitTime));
+    }
+
+    private void ToggleView()  // New method to toggle view
+    {
+        IsListView = !IsListView;
+    }
+}

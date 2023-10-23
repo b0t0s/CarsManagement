@@ -1,0 +1,25 @@
+﻿@page "/"
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Index</PageTitle>
+
+<div>
+    <h1>Management Playground</h1>
+</div>
+
+@code
+{
+    public bool IsAuthenticated { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var authState = AuthStateProvider.GetAuthenticationStateAsync().Result;
+
+        if (authState.User != null)
+        {
+            IsAuthenticated = true;
+        }
+
+    }
+}

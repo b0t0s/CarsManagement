@@ -1,0 +1,86 @@
+﻿@page "/login"
+@using System.Text
+@using System.Text.Json
+@using CarsManagement.Shared.DTO
+@inject HttpClient http
+@inject NavigationManager NavManager
+@inject CustomAuthenticationStateProvider AuthStateProvider
+
+<div class="d-flex justify-content-center align-items-center vh-50 vw-50">
+    <div class="card">
+        <div class="card-body">
+            <form @onsubmit="HandleLogin">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" @bind="Username" placeholder="Enter your username">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" @bind="Password" placeholder="Enter your password">
+                </div>
+
+                <div class="mb-3">
+                    <div class="badge badge-primary text-wrap p-3">
+                        <p class="text-justify text-uppercase font-weight-bolder text-monospace text-dark" style="font-size: 16px">@LoginResponse</p>
+                    </div>
+                </div>
+                
+                <div class="btn-group d-flex justify-content-center" role="group" aria-label="Basic example">
+                    <button type="submit" class="btn btn-primary border border-white mx-3">Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string Username { get; set; }
+    private string Password { get; set; }
+
+    private string LoginResponse { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+
+        if (authState.User.Identity.IsAuthenticated)
+        {
+            Console.WriteLine("Already authenticated");
+            NavManager.NavigateTo("/");
+        }
+
+        Username = "Mick Jagger";
+        Password = "Qwerty123$";
+    }
+
+    private async Task HandleLogin()
+    {
+        var loginRequest = new LoginRequest(Username, Password);
+
+        Console.WriteLine($"Formated Login Request: {Username}, {Password}");
+
+        var jsonContent = new StringContent(JsonSerializer.Serialize(loginRequest), Encoding.UTF8, "application/json");
+
+        Console.WriteLine("Requesting login");
+
+        var response = await http.PostAsync("/auth/login", jsonContent);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Login successes!");
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            LoginResponse = responseContent;
+
+            AuthStateProvider.NotifyUserAuthentication(Username);  // Notify authentication state has changed
+            NavManager.NavigateTo("/");
+        }
+        else
+        {
+            Console.WriteLine("Login failed");
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            LoginResponse = responseContent;
+        }
+    }
+}

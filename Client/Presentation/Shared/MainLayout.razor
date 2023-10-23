@@ -1,0 +1,31 @@
+﻿@using CarsManagement.Client.Pages
+@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+
+        <article class="content px-4">
+            <AuthorizeView>
+                <Authorized>
+                    @Body
+                </Authorized>
+
+                <NotAuthorized>
+                    <div class="row justify-content-center align-items-center">
+                        <div class="col-md-3">
+                            <LoginPage />
+                        </div>
+                        <div class="col-md-5">
+                            <RegisterPage />
+                        </div>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
+
+        </article>
+    </main>
+</div>

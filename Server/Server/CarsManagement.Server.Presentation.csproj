@@ -1,0 +1,66 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Configurations>Debug;Release</Configurations>
+
+		<!-- Assembly Information -->
+		<Title>Cars parking management system</Title>
+		<Product>CarsManagementServer</Product>
+		<Authors>Bohdan B. O.</Authors>
+		<Version>1.0.0</Version>
+		<FileVersion>1.0.0</FileVersion>
+		<AssemblyVersion>1.0.0</AssemblyVersion>
+
+		<!-- Code Quality and Style -->
+		<LangVersion>latest</LangVersion>
+		<AnalysisLevel>latest-recommended</AnalysisLevel>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+
+		<!-- Miscellaneous -->
+		<AccelerateBuildsInVisualStudio>True</AccelerateBuildsInVisualStudio>
+		<AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
+		<AppendRuntimeIdentifierToOutputPath>False</AppendRuntimeIdentifierToOutputPath>
+		<IncludeNativeLibrariesForSelfExtract>True</IncludeNativeLibrariesForSelfExtract>
+
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='Debug' Or '$(Configuration)'=='DebugSql'">
+		<Optimize>False</Optimize>
+		<DebugType>Full</DebugType>
+		<DebugSymbols>True</DebugSymbols>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
+		<Optimize>False</Optimize>
+		<DebugType>Full</DebugType>
+		<DebugSymbols>True</DebugSymbols>
+
+		<!--<Optimize>True</Optimize>
+		<DebugType>None</DebugType>
+		<DebugSymbols>False</DebugSymbols>-->
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="12.0.1" />
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="7.0.12" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.12">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.5.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Client\Presentation\CarsManagement.Client.csproj" />
+		<ProjectReference Include="..\Application\CarsManagement.Server.Application.csproj" />
+	</ItemGroup>
+
+
+</Project>

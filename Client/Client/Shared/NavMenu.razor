@@ -3,7 +3,6 @@
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Cars management client</a>
-        <PageTitle>@AuthenticationValue</PageTitle>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -25,12 +24,6 @@
                             <span class="oi oi-home" aria-hidden="true"></span> Home
                         </NavLink>
                     </div>
-                    
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="LotBuilder">
-                            <span class="oi oi-list-rich" aria-hidden="true"></span> Build Parking Lot
-                        </NavLink>
-                    </div>
 
                     <div class="nav-item px-3">
                         <NavLink class="nav-link" href="DataTable">
@@ -39,11 +32,23 @@
                     </div>
 
                     <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="LotBuilder">
+                            <span class="oi oi-grid-four-up" aria-hidden="true"></span> Build Parking Lot
+                        </NavLink>
+                    </div>
+
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="park">
+                            <span class="oi oi-grid-four-up" aria-hidden="true"></span> Park car
+                        </NavLink>
+                    </div>
+
+                    <div class="nav-item px-3">
                         <NavLink class="nav-link" href="Swagger">
                             <span class="oi oi-list" aria-hidden="true"></span> Redirect to Swagger
                         </NavLink>
                     </div>
-                    
+
                     <div class="nav-item px-3 text-white">
                         <NavLink class="nav-link" href="/auth/logout">
                             <span class="oi oi-account-logout" aria-hidden="true"></span> Logout
@@ -67,7 +72,7 @@
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
     {
         AuthenticationState = await task;
-        StateHasChanged();  // Request re-rendering of the component
+        StateHasChanged(); // Request re-rendering of the component
     }
 
     private AuthenticationState? AuthenticationState { get; set; }
@@ -78,8 +83,7 @@
         {
             if (AuthenticationState.User.Identity.IsAuthenticated)
                 return "Authenticated";
-            else
-                return "Not Authenticated";
+            return "Not Authenticated";
         }
     }
 
@@ -99,7 +103,8 @@
 
     public void Dispose()
     {
-        // Unsubscribe from the event to prevent memory leaks
+    // Unsubscribe from the event to prevent memory leaks
         AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
+
 }

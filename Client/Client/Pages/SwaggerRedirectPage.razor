@@ -14,13 +14,15 @@
 </div>
 
 @code {
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             var delay = Task.Delay(5000);
             await delay;
-            Navigation.NavigateTo("/swagger", forceLoad: true);
+            Navigation.NavigateTo("/swagger", true);
         }
     }
+
 }

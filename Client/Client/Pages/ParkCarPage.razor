@@ -1,0 +1,107 @@
+﻿@page "/park"
+@using CarsManagement.Shared.Extensions
+@using CarsManagement.Shared.DTO
+@using CarsManagement.Client.Application.Builders
+@using CarsManagement.Client.Components
+
+@inject ICarBuilder<CarDTO, TicketDTO> CarsBuilder
+
+@inject HttpClient http
+@inject CustomAuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Park</PageTitle>
+
+<!-- Input Form -->
+<div class="input-group mb-3">
+    <select @bind="SelectedLot" class="form-control mb-2">
+        <option value="">Select lot</option>
+        @foreach (var lot in ParkingLots)
+        {
+            <option value="@lot.LotId">@lot.LotName</option>
+        }
+    </select>
+
+    <select @bind="SelectedSpot" class="form-control mb-2">
+        <option value="">Select spot</option>
+        @foreach (var lot in ParkingLots)
+        {
+            foreach (var spot in lot.ParkingSpots)
+            {
+                <option value="@spot.Id">@spot.Id</option>
+            }
+        }
+    </select>
+
+    <input type="text" @bind="Brand" placeholder="Brand" class="form-control mb-2"/>
+    <input type="text" @bind="Model" placeholder="Model" class="form-control mb-2"/>
+    <input type="text" @bind="LicensePlate" placeholder="License" class="form-control mb-2"/>
+    <input type="datetime" @bind="ExitTime" placeholder="Exit Time" class="form-control mb-2"/>
+
+    <div class="input-group-append">
+        <button class="btn btn-primary mb-2" @onclick="Park" disabled="@IsSubmitDisabled">Reserve</button>
+    </div>
+</div>
+
+@foreach (var lot in ParkingLots)
+{
+    <div>
+        <SpotsTable ParkingLot="lot" AvailableSpots="lot.GetAvailableSpotIds()" SelectedSpot="@SelectedSpot"/>
+    </div>
+}
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        Manager = await http.GetFromJsonAsync<ManagerDTO>($"/Managers/Manager/Name/{AuthStateProvider.User.Identity.Name}");
+
+        ParkingLots = Manager.ManagedParkingLots.ToList();
+    }
+
+    public ManagerDTO Manager { get; set; } = new();
+
+    public List<ParkingLotDTO> ParkingLots { get; set; } = new();
+
+    public int SelectedLot { get; set; }
+
+    public int SelectedSpot { get; set; }
+
+    public string Brand { get; set; }
+
+    public string Model { get; set; }
+
+    public string LicensePlate { get; set; }
+
+    public bool IsSubmitDisabled => SelectedLot != null;
+
+    public DateTime ExitTime { get; set; } = DateTime.Now + TimeSpan.FromDays(1);
+
+    public void Park()
+    {
+        ParkCar(BuildCar());
+    }
+
+    private CarDTO BuildCar()
+    {
+        var car = CarsBuilder
+            .SetId(1)
+            .SetBrand(Brand)
+            .SetModel(Model)
+            .SetLicensePlate(LicensePlate)
+            .SetTicket(new TicketDTO
+            {
+                AmountPaid = (decimal)((ExitTime - DateTime.Now).Days * 10 + (ExitTime - DateTime.Now).TotalHours * 0.01),
+                EntryTime = DateTime.Now,
+                ExitTime = DateTime.Now + TimeSpan.FromDays(1)
+            })
+            .Build();
+
+        return car;
+    }
+
+    private void ParkCar(CarDTO car)
+    {
+        ParkingLots.FirstOrDefault(x => x.LotId == SelectedLot).ParkingSpots.FirstOrDefault(y => y.Id == SelectedSpot).ParkedCar = car;
+    }
+
+}

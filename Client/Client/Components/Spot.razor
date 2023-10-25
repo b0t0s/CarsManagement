@@ -1,0 +1,26 @@
+﻿@using CarsManagement.Shared.DTO
+<div class="card">
+    <div class="card-body" style="background-color: @(IsAvailable ? IsSelected ? "yellow" : "green" : "red")">
+        <h5 class="card-title text-center text-wrap font-weight-bold">@SpotId</h5>
+        <img class="img-thumbnail rounded d-block" src="images/@(IsInclusive ? "spot for disabled.svg" : "usual spot.svg")" alt="">
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public int SpotId { get; set; }
+
+    [Parameter]
+    public bool IsInclusive { get; set; }
+
+    [Parameter]
+    public bool IsAvailable { get; set; }
+
+    [Parameter]
+    public bool IsSelected { get; set; }
+
+    [Parameter]
+    public CarDTO? ParkedCar { get; set; }
+
+}

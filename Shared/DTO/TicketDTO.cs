@@ -1,13 +1,18 @@
-﻿namespace CarsManagement.Shared.DTO;
+﻿using System.Diagnostics;
 
-public class TicketDTO
+namespace CarsManagement.Shared.DTO;
+
+[DebuggerDisplay("{ToString(),nq}")]
+public class TicketDTO : BaseDTO
 {
-    public int Id { get; set; }
-
     public decimal AmountPaid { get; set; }
 
     public DateTime EntryTime { get; set; }
 
     public DateTime? ExitTime { get; set; }
 
+    public override string ToString()
+    {
+        return $"Id: {Id}, AmountPaid: {AmountPaid}, EntryTime: {EntryTime}, ExitTime: {ExitTime}";
+    }
 }

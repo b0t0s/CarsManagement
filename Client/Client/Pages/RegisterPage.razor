@@ -5,6 +5,8 @@
 @inject HttpClient http
 @inject NavigationManager NavManager
 
+<PageTitle>Register</PageTitle>
+
 <div class="d-flex justify-content-center align-items-center vh-50 vw-50">
     <div class="card">
         <div class="card-body">
@@ -43,7 +45,6 @@
 
     private async Task HandleRegister()
     {
-
         Console.WriteLine("HandleRegister method invoked.");
 
         var registerRequest = new RegistrationRequest(Username, Email, Password);
@@ -75,4 +76,5 @@
             RegisterResponse = responseContent;
         }
     }
+
 }

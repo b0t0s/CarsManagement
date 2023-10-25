@@ -1,10 +1,12 @@
 ﻿@page "/login"
-@using System.Text
-@using System.Text.Json
 @using CarsManagement.Shared.DTO
+@using System.Text.Json
+@using System.Text
 @inject HttpClient http
 @inject NavigationManager NavManager
 @inject CustomAuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Login</PageTitle>
 
 <div class="d-flex justify-content-center align-items-center vh-50 vw-50">
     <div class="card">
@@ -24,7 +26,7 @@
                         <p class="text-justify text-uppercase font-weight-bolder text-monospace text-dark" style="font-size: 16px">@LoginResponse</p>
                     </div>
                 </div>
-                
+
                 <div class="btn-group d-flex justify-content-center" role="group" aria-label="Basic example">
                     <button type="submit" class="btn btn-primary border border-white mx-3">Login</button>
                 </div>
@@ -72,7 +74,7 @@
             var responseContent = await response.Content.ReadAsStringAsync();
             LoginResponse = responseContent;
 
-            AuthStateProvider.NotifyUserAuthentication(Username);  // Notify authentication state has changed
+            AuthStateProvider.NotifyUserAuthentication(Username); // Notify authentication state has changed
             NavManager.NavigateTo("/");
         }
         else
@@ -83,4 +85,5 @@
             LoginResponse = responseContent;
         }
     }
+
 }

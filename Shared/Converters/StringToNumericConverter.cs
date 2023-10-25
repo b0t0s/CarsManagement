@@ -8,15 +8,16 @@ public class StringToNumericConverter : JsonConverter
 {
     public override bool CanConvert(Type objectType)
     {
-        return objectType == typeof(int) || objectType == typeof(long) || objectType == typeof(double) || objectType == typeof(decimal) || objectType == typeof(float) || objectType == typeof(short);
+        return objectType == typeof(int) || objectType == typeof(long) || objectType == typeof(double) ||
+               objectType == typeof(decimal) || objectType == typeof(float) || objectType == typeof(short);
     }
 
     public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
     {
-        JToken token = JToken.Load(reader);
+        var token = JToken.Load(reader);
         if (token.Type == JTokenType.String)
         {
-            string tokenValue = token.ToString();
+            var tokenValue = token.ToString();
 
             if (objectType == typeof(int))
                 return (int)double.Parse(tokenValue, CultureInfo.InvariantCulture);
@@ -36,6 +37,7 @@ public class StringToNumericConverter : JsonConverter
             if (objectType == typeof(short))
                 return (short)double.Parse(tokenValue, CultureInfo.InvariantCulture);
         }
+
         return token.ToObject(objectType);
     }
 

@@ -12,11 +12,8 @@ public class BoolConverter : JsonConverter
 
     public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
     {
-        JToken token = JToken.Load(reader);
-        if (token.Type == JTokenType.String)
-        {
-            return token.ToString() == "1";
-        }
+        var token = JToken.Load(reader);
+        if (token.Type == JTokenType.String) return token.ToString() == "1";
         return token.ToObject<bool>();
     }
 

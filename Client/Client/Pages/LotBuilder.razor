@@ -1,0 +1,81 @@
+﻿@page "/LotBuilder"
+@using Microsoft.IdentityModel.Tokens
+@using CarsManagement.Shared.Extensions
+@using CarsManagement.Shared.DTO
+@using CarsManagement.Client.Application.Builders
+@using CarsManagement.Client.Components
+
+@inject IParkingLotBuilder<ParkingLotDTO, ParkingSpotDTO> LotsBuilder
+@inject IParkingSpotBuilder<ParkingSpotDTO> SpotsBuilder
+
+@inject HttpClient http
+@inject CustomAuthenticationStateProvider AuthStateProvider
+
+<PageTitle>LotBuilder</PageTitle>
+
+<!-- Input Form -->
+<div class="input-group mb-3">
+    <input type="text" @bind="LotName" placeholder="Lot Name" class="form-control mb-2"/>
+    <input type="text" @bind="LotLocation" placeholder="Lot Location" class="form-control mb-2"/>
+    <input type="number" min="1" @bind="SpotCount" placeholder="Spots amount" class="form-control mb-2"/>
+    <div class="input-group-append">
+        <button class="btn btn-primary mb-2" @onclick="BuildLot" disabled="@IsSubmitDisabled">Build Lot</button>
+    </div>
+</div>
+
+<div>
+    @if (ParkingLot != null && !ParkingLot.ParkingSpots.IsNullOrEmpty())
+    {
+        <SpotsTable ParkingLot="ParkingLot" AvailableSpots="ParkingLot.GetAvailableSpotIds()" SelectedSpot="-1"/>
+    }
+</div>
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        Manager = await http.GetFromJsonAsync<ManagerDTO>($"/Managers/Manager/Name/{AuthStateProvider.User.Identity.Name}");
+    }
+
+    public ParkingLotDTO? ParkingLot { get; set; } = new();
+
+    public ManagerDTO Manager { get; set; }
+
+    public int SpotCount { get; set; }
+
+    public string LotName { get; set; }
+
+    public string LotLocation { get; set; }
+
+    public bool IsSubmitDisabled => string.IsNullOrEmpty(LotName) || string.IsNullOrEmpty(LotLocation) || SpotCount <= 0;
+
+    private void BuildLot()
+    {
+        var spots = new List<ParkingSpotDTO>();
+
+        for (var i = 0; i < SpotCount; i++)
+        {
+            var spot = SpotsBuilder.SetSpotId(i).Build();
+
+            if (i % 10 == 0)
+            {
+                spot = SpotsBuilder.SetSpotId(i).SetIsInclusive(true).Build();
+            }
+            else
+            {
+                spot = SpotsBuilder.SetSpotId(i).SetIsInclusive(false).Build();
+            }
+
+            spots.Add(spot);
+        }
+
+        ParkingLot = LotsBuilder
+            .SetLotId(1)
+            .SetManagerId(Manager.ManagerId)
+            .SetLotName(LotName)
+            .SetLotLocation(LotLocation)
+            .SetLotsSpots(spots)
+            .Build();
+    }
+
+}

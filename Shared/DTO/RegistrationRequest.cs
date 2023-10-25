@@ -1,5 +1,8 @@
-﻿namespace CarsManagement.Shared.DTO;
+﻿using System.Diagnostics;
 
+namespace CarsManagement.Shared.DTO;
+
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record RegistrationRequest(string Username, string Email, string Password)
 {
     public string Username { get; set; } = Username;
@@ -8,8 +11,8 @@ public sealed record RegistrationRequest(string Username, string Email, string P
 
     public string Password { get; set; } = Password;
 
-    public bool ComparePassword(string passwordToCompare)
+    public override string ToString()
     {
-        return Password.Equals(passwordToCompare);
+        return $"Username: {Username}, Email: {Email}, Password: {Password}";
     }
 }

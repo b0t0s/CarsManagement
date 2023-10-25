@@ -1,0 +1,30 @@
+﻿@using CarsManagement.Shared.DTO
+<div class="row p-1 @Margin">
+    @for (var spotIndex = 0; spotIndex < ParkingSpots.Count; spotIndex++)
+    {
+        var spot = ParkingSpots[spotIndex];
+        <div class="col-1">
+            <Spot SpotId="@spot.Id"
+                  IsInclusive="@(spotIndex % 10 == 0)"
+                  IsAvailable="@AvailableSpots.Contains(spot.Id)"
+                  IsSelected="@(spot.Id == SelectedSpot)"
+                  ParkedCar="spot.ParkedCar"/>
+        </div>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public List<int> AvailableSpots { get; set; }
+
+    [Parameter]
+    public int SelectedSpot { get; set; }
+
+    [Parameter]
+    public List<ParkingSpotDTO> ParkingSpots { get; set; }
+
+    [Parameter]
+    public string Margin { get; set; }
+
+}

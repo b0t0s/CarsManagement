@@ -1,0 +1,43 @@
+﻿@page "/lots"
+@using CarsManagement.Shared.DTO
+
+@if (ParkingLot != null)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Demo (@ParkingLot.LotName: @ParkingLot.LotLocation)</h5>
+
+            <div class="container">
+                @for (var row = 0; row < (ParkingLot.ParkingSpots.Count + 9) / 10; row++)
+                {
+                    var spots = ParkingLot.ParkingSpots.Skip(row * 10).Take(10).ToList();
+
+                    Console.WriteLine($"Building row for such lot: {ParkingLot}");
+                    Console.WriteLine($"Extracted spots from lot: {spots.Count}");
+
+                    @if (row % 2 == 0)
+                    {
+                        <SpotsRow AvailableSpots="@AvailableSpots" SelectedSpot="@SelectedSpot" ParkingSpots="@spots" Margin="mb-"/>
+                    }
+                    else
+                    {
+                        <SpotsRow AvailableSpots="@AvailableSpots" SelectedSpot="@SelectedSpot" ParkingSpots="@spots" Margin="@string.Empty"/>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public ParkingLotDTO ParkingLot { get; set; }
+
+    [Parameter]
+    public List<int> AvailableSpots { get; set; }
+
+    [Parameter]
+    public int SelectedSpot { get; set; }
+
+}

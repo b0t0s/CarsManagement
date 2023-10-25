@@ -14,21 +14,22 @@ namespace CarsManagement.Server.Presentation.Controllers;
 [Route("[Controller]")]
 public class LotsController : ControllerBase
 {
-    private ILogger<LotsController> Logger { get; set; }
-
-    private IRepository<LotModel> Repository { get; set; }
-
-    private IMapper Mapper { get; set; }
-
-    private IOptions<ApiSettings> Settings { get; set; }
-
-    public LotsController(ILogger<LotsController> logger, IRepository<LotModel> repository, IMapper mapper, IOptions<ApiSettings> options)
+    public LotsController(ILogger<LotsController> logger, IRepository<LotModel> repository, IMapper mapper,
+        IOptions<ApiSettings> options)
     {
         Logger = logger;
         Repository = repository;
         Mapper = mapper;
         Settings = options;
     }
+
+    private ILogger<LotsController> Logger { get; }
+
+    private IRepository<LotModel> Repository { get; }
+
+    private IMapper Mapper { get; }
+
+    private IOptions<ApiSettings> Settings { get; set; }
 
     [HttpGet]
     [SwaggerOperation(
@@ -107,10 +108,7 @@ public class LotsController : ControllerBase
         try
         {
             var existingLot = Repository.GetItem(id);
-            if (existingLot == null)
-            {
-                return NotFound();
-            }
+            if (existingLot == null) return NotFound();
 
             Mapper.Map(parkingLotDto, existingLot);
             Repository.Update(existingLot);

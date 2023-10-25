@@ -10,5 +10,5 @@ public class LotModel
 
     public string LotLocation { get; set; }
 
-    public List<SpotModel> ParkingSpots { get; set; } = new List<SpotModel>();
+    public List<SpotModel> ParkingSpots { get; set; } = new();
 }

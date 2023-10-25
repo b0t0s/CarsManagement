@@ -2,6 +2,7 @@
 using CarsManagement.Server.Application;
 using CarsManagement.Server.Domain.Entities;
 using CarsManagement.Shared.DTO;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -14,14 +15,6 @@ namespace CarsManagement.Server.Presentation.Controllers;
 [Route("[Controller]")]
 public class CarsController : ControllerBase
 {
-    private ILogger<CarsController> Logger { get; set; }
-
-    private IRepository<CarModel> Repository { get; set; }
-
-    private IMapper Mapper { get; }
-
-    private IOptions<ApiSettings> Settings { get; set; }
-
     public CarsController(ILogger<CarsController> logger, IRepository<CarModel> repository, IMapper mapper, IOptions<ApiSettings> options)
     {
         Logger = logger;
@@ -29,6 +22,14 @@ public class CarsController : ControllerBase
         Mapper = mapper;
         Settings = options;
     }
+
+    private ILogger<CarsController> Logger { get; }
+
+    private IRepository<CarModel> Repository { get; }
+
+    private IMapper Mapper { get; }
+
+    private IOptions<ApiSettings> Settings { get; set; }
 
     [HttpGet]
     [SwaggerOperation(
@@ -107,10 +108,7 @@ public class CarsController : ControllerBase
         try
         {
             var existingCar = Repository.GetItem(id);
-            if (existingCar == null)
-            {
-                return NotFound();
-            }
+            if (existingCar == null) return NotFound();
 
             Mapper.Map(carDto, existingCar);
             Repository.Update(existingCar);

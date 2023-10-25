@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CarsManagement.Server.Domain;
 using CarsManagement.Server.Domain.Entities;
-using CarsManagement.Shared.DTO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -10,9 +9,6 @@ namespace CarsManagement.Server.Application.Repositories;
 public class TicketsRepository : IRepository<TicketModel>
 {
     private readonly ApplicationDbContext _context;
-    private IMapper Mapper { get; }
-
-    private ILogger<TicketsRepository> Logger { get; }
 
     public TicketsRepository(ApplicationDbContext context, ILogger<TicketsRepository> logger, IMapper mapper)
     {
@@ -23,10 +19,14 @@ public class TicketsRepository : IRepository<TicketModel>
         _context.Database.EnsureCreated();
     }
 
+    private IMapper Mapper { get; }
+
+    private ILogger<TicketsRepository> Logger { get; }
+
     public TicketModel GetItem(int id)
     {
         var entity = _context.ParkingTickets.Find(id);
-        return entity; 
+        return entity;
     }
 
     public List<TicketModel> GetItems()
@@ -61,15 +61,11 @@ public class TicketsRepository : IRepository<TicketModel>
             .FirstOrDefault(p => p.Id == item.Id);
 
         if (existingManager != null)
-        {
             // Update the entity if it exists
             _context.Entry(existingManager).CurrentValues.SetValues(item);
-        }
         else
-        {
             // Add the entity if it doesn't exist
             _context.ParkingTickets.Add(item);
-        }
         _context.SaveChanges();
     }
 

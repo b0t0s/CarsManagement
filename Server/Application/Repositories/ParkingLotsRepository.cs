@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CarsManagement.Server.Domain;
 using CarsManagement.Server.Domain.Entities;
-using CarsManagement.Shared.DTO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -10,10 +9,6 @@ namespace CarsManagement.Server.Application.Repositories;
 public class ParkingLotsRepository : IRepository<LotModel>
 {
     private readonly ApplicationDbContext _context;
-
-    private IMapper Mapper { get; }
-
-    private ILogger<ParkingLotsRepository> Logger { get; }
 
     public ParkingLotsRepository(ApplicationDbContext context, ILogger<ParkingLotsRepository> logger, IMapper mapper)
     {
@@ -24,6 +19,10 @@ public class ParkingLotsRepository : IRepository<LotModel>
         _context.Database.EnsureCreated();
     }
 
+    private IMapper Mapper { get; }
+
+    private ILogger<ParkingLotsRepository> Logger { get; }
+
     public LotModel GetItem(int id)
     {
         var entity = _context.ParkingLots.Find(id);
@@ -33,7 +32,8 @@ public class ParkingLotsRepository : IRepository<LotModel>
 
     public List<LotModel> GetItems()
     {
-        var entities = _context.ParkingLots.AsNoTracking().Include(y => y.ParkingSpots).ThenInclude(z => z.ParkedCar).ThenInclude(v => v.Ticket).ToList();
+        var entities = _context.ParkingLots.AsNoTracking().Include(y => y.ParkingSpots).ThenInclude(z => z.ParkedCar)
+            .ThenInclude(v => v.Ticket).ToList();
 
         return entities;
     }
@@ -63,15 +63,11 @@ public class ParkingLotsRepository : IRepository<LotModel>
             .FirstOrDefault(p => p.Id == item.Id);
 
         if (parkingLot != null)
-        {
             // Update the entity if it exists
             _context.Entry(parkingLot).CurrentValues.SetValues(item);
-        }
         else
-        {
             // Add the entity if it doesn't exist
             _context.ParkingLots.Add(item);
-        }
         _context.SaveChanges();
     }
 

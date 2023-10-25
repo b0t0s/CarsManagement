@@ -14,21 +14,22 @@ namespace CarsManagement.Server.Presentation.Controllers;
 [Route("[Controller]")]
 public class SpotsController : ControllerBase
 {
-    private ILogger<SpotsController> Logger { get; set; }
-
-    private IRepository<SpotModel> Repository { get; set; }
-
-    private IMapper Mapper { get; set; }
-
-    private IOptions<ApiSettings> Settings { get; set; }
-
-    public SpotsController(ILogger<SpotsController> logger, IRepository<SpotModel> repository, IMapper mapper, IOptions<ApiSettings> options)
+    public SpotsController(ILogger<SpotsController> logger, IRepository<SpotModel> repository, IMapper mapper,
+        IOptions<ApiSettings> options)
     {
         Logger = logger;
         Repository = repository;
         Mapper = mapper;
         Settings = options;
     }
+
+    private ILogger<SpotsController> Logger { get; }
+
+    private IRepository<SpotModel> Repository { get; }
+
+    private IMapper Mapper { get; }
+
+    private IOptions<ApiSettings> Settings { get; set; }
 
     [HttpGet]
     [SwaggerOperation(
@@ -107,10 +108,7 @@ public class SpotsController : ControllerBase
         try
         {
             var existingSpot = Repository.GetItem(id);
-            if (existingSpot == null)
-            {
-                return NotFound();
-            }
+            if (existingSpot == null) return NotFound();
 
             Mapper.Map(spotDto, existingSpot);
             Repository.Update(existingSpot);

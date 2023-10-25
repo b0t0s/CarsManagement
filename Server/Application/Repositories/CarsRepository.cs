@@ -9,8 +9,6 @@ public class CarsRepository : IRepository<CarModel>
 {
     private readonly ApplicationDbContext _context;
 
-    private ILogger<CarsRepository> Logger { get; }
-
     public CarsRepository(ApplicationDbContext context, ILogger<CarsRepository> logger)
     {
         _context = context;
@@ -19,18 +17,20 @@ public class CarsRepository : IRepository<CarModel>
         _context.Database.EnsureCreated();
     }
 
+    private ILogger<CarsRepository> Logger { get; }
+
     public CarModel GetItem(int id)
     {
         var entity = _context.Cars.Find(id);
 
-        return entity; 
+        return entity;
     }
 
     public List<CarModel> GetItems()
     {
         var entities = _context.Cars.Include(c => c.Ticket).ToList();
 
-        return entities; 
+        return entities;
     }
 
     public void Add(CarModel item)
@@ -54,15 +54,11 @@ public class CarsRepository : IRepository<CarModel>
             .FirstOrDefault(p => p.Id == item.Id);
 
         if (existingManager != null)
-        {
             // Update the entity if it exists
             _context.Entry(existingManager).CurrentValues.SetValues(item);
-        }
         else
-        {
             // Add the entity if it doesn't exist
             _context.Cars.Add(item);
-        }
 
         _context.SaveChanges();
     }

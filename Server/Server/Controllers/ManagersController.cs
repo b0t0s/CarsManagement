@@ -14,21 +14,22 @@ namespace CarsManagement.Server.Presentation.Controllers;
 [Route("[Controller]")]
 public class ManagersController : ControllerBase
 {
-    private ILogger<ManagersController> Logger { get; set; }
-
-    private IRepository<ManagerModel> Repository { get; set; }
-
-    private IMapper Mapper { get; set; }
-
-    private IOptions<ApiSettings> Settings { get; set; }
-
-    public ManagersController(ILogger<ManagersController> logger, IRepository<ManagerModel> repository, IMapper mapper, IOptions<ApiSettings> options)
+    public ManagersController(ILogger<ManagersController> logger, IRepository<ManagerModel> repository, IMapper mapper,
+        IOptions<ApiSettings> options)
     {
         Logger = logger;
         Repository = repository;
         Mapper = mapper;
         Settings = options;
     }
+
+    private ILogger<ManagersController> Logger { get; }
+
+    private IRepository<ManagerModel> Repository { get; }
+
+    private IMapper Mapper { get; }
+
+    private IOptions<ApiSettings> Settings { get; set; }
 
     [HttpGet]
     [SwaggerOperation(
@@ -76,6 +77,39 @@ public class ManagersController : ControllerBase
         }
     }
 
+    [HttpGet("/Managers/Manager/Name/{name}")]
+    [SwaggerOperation(
+        Summary = "Fetches a manager by ID",
+        Description = "Retrieves a single manager its ID"
+    )]
+    public async Task<IActionResult> Get(string name)
+    {
+        try
+        {
+            var items = Repository.GetItems();
+
+            var item = items.Where(x => x.AccountName == name).FirstOrDefault();
+
+            if (item != null)
+            {
+                var manager = Mapper.Map<ManagerDTO>(item);
+
+                return Ok(manager);
+            }
+
+            return new ObjectResult("Manager not found")
+            {
+                StatusCode = 404
+            };
+        }
+        catch (Exception e)
+        {
+            Logger.LogError($"Exception: {e.Message}");
+
+            return StatusCode(500, $"Exception: {e.Message}");
+        }
+    }
+
     [HttpPost]
     [SwaggerOperation(
         Summary = "Creates a new manager",
@@ -107,10 +141,7 @@ public class ManagersController : ControllerBase
         try
         {
             var existingManager = Repository.GetItem(id);
-            if (existingManager == null)
-            {
-                return NotFound();
-            }
+            if (existingManager == null) return NotFound();
 
             Mapper.Map(managerDto, existingManager);
             Repository.Update(existingManager);

@@ -14,21 +14,22 @@ namespace CarsManagement.Server.Presentation.Controllers;
 [Route("[Controller]")]
 public class TicketsController : ControllerBase
 {
-    private ILogger<TicketsController> Logger { get; set; }
-
-    private IRepository<TicketModel> Repository { get; set; }
-
-    private IMapper Mapper { get; set; }
-
-    private IOptions<ApiSettings> Settings { get; set; }
-
-    public TicketsController(ILogger<TicketsController> logger, IRepository<TicketModel> repository, IMapper mapper, IOptions<ApiSettings> options)
+    public TicketsController(ILogger<TicketsController> logger, IRepository<TicketModel> repository, IMapper mapper,
+        IOptions<ApiSettings> options)
     {
         Logger = logger;
         Repository = repository;
         Mapper = mapper;
         Settings = options;
     }
+
+    private ILogger<TicketsController> Logger { get; }
+
+    private IRepository<TicketModel> Repository { get; }
+
+    private IMapper Mapper { get; }
+
+    private IOptions<ApiSettings> Settings { get; set; }
 
     [HttpGet]
     [SwaggerOperation(
@@ -107,10 +108,7 @@ public class TicketsController : ControllerBase
         try
         {
             var existingTicket = Repository.GetItem(id);
-            if (existingTicket == null)
-            {
-                return NotFound();
-            }
+            if (existingTicket == null) return NotFound();
 
             Mapper.Map(ticketDto, existingTicket);
             Repository.Update(existingTicket);

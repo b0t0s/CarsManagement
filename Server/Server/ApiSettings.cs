@@ -2,7 +2,9 @@
 
 public class ApiSettings
 {
-    public string SomeValue { get; set; }
-
     public string JwtKey { get; set; }
+
+    public string JwtIssuer { get; set; }
+
+    public string JwtAudience { get; set;}
 }

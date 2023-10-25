@@ -1,142 +1,159 @@
+using System.Text;
 using CarsManagement.Server.Application;
 using CarsManagement.Server.Application.Repositories;
 using CarsManagement.Server.Domain;
 using CarsManagement.Server.Domain.Entities;
-using CarsManagement.Shared.DTO;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
+using Microsoft.OpenApi.Models;
 
-namespace CarsManagement.Server.Presentation
+namespace CarsManagement.Server.Presentation;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        #region Setup DI
+
+        // Add mapper
+        builder.Services.AddAutoMapper(cfg => cfg.AddProfile<ServerMapperProfile>(), typeof(Program));
+
+        // Add the DbContext to the services
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add simple logging
-            builder.Logging.AddConsole();
-            builder.Logging.SetMinimumLevel(LogLevel.Debug);
-
-            // Add services to the container.
-            builder.Services.AddControllersWithViews();
-            builder.Services.AddRazorPages();
-
-            // Add configuration to the container.
-            builder.Configuration.AddJsonFile("appsettings.json");
-
-            // Add mapper
-            // Add mapper
-            builder.Services.AddAutoMapper(cfg => cfg.AddProfile<ServerMapperProfile>(), typeof(Program));
-
-            // Add the DbContext to the services
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            {
 #if DEBUG
-                options.UseInMemoryDatabase("CarsManagement");
+            options.UseInMemoryDatabase("CarsManagement");
 #else
                 var connectionString = builder.Configuration.GetSection("ConnectionString").Value;
                 options.UseSqlServer(connectionString);
 #endif
-                options.EnableDetailedErrors();
-                options.EnableSensitiveDataLogging();
+            options.EnableDetailedErrors();
+            options.EnableSensitiveDataLogging();
+        });
+
+        builder.Services.AddScoped<IRepository<ManagerModel>, ManagersRepository>();
+        builder.Services.AddScoped<IRepository<LotModel>, ParkingLotsRepository>();
+        builder.Services.AddScoped<IRepository<SpotModel>, ParkingSpotsRepository>();
+        builder.Services.AddScoped<IRepository<CarModel>, CarsRepository>();
+        builder.Services.AddScoped<IRepository<TicketModel>, TicketsRepository>();
+
+        #endregion
+
+        #region Services Setup
+
+        // Add simple logging
+        builder.Logging.AddConsole();
+        builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
+        // Add services to the container.
+        builder.Services.AddControllersWithViews();
+        builder.Services.AddRazorPages();
+
+        // Add configuration to the container.
+        builder.Configuration.AddJsonFile("appsettings.json");
+        builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
+
+        // Add response compression services
+        builder.Services.AddResponseCompression(opts =>
+        {
+            opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                new[] { "application/octet-stream" });
+        });
+
+        // Add Swagger services
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Cars Management API", Version = "v1" });
+
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Please insert JWT token into field",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "bearer"
             });
 
-            builder.Services.AddScoped<IRepository<ManagerModel>, ManagersRepository>();
-            builder.Services.AddScoped<IRepository<LotModel>, ParkingLotsRepository>();
-            builder.Services.AddScoped<IRepository<SpotModel>, ParkingSpotsRepository>();
-            builder.Services.AddScoped<IRepository<CarModel>, CarsRepository>();
-            builder.Services.AddScoped<IRepository<TicketModel>, TicketsRepository>();
-
-            //Add auth
-            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-                {
-                    options.LoginPath = "/auth/login";
-                });
-
-            // Add health checks
-            builder.Services.AddHealthChecks();
-
-            // Add Swagger services
-            builder.Services.AddSwaggerGen(c =>
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
-                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Cars Management API", Version = "v1" });
-
-                // Define the OAuth2 scheme for Swagger
-                c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
                 {
-                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
-                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-                    Name = "Authorization",
-                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey
-                });
-
-                // Apply the security requirements
-                c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-                {
+                    new OpenApiSecurityScheme
                     {
-                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        Reference = new OpenApiReference
                         {
-                            Reference = new Microsoft.OpenApi.Models.OpenApiReference { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
-                        },
-                        new string[] { }
-                    }
-                });
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new string[] { }
+                }
             });
-
-            // Add response compression services
-            builder.Services.AddResponseCompression(opts =>
+        });
+        builder.Services.AddAuthentication(options =>
             {
-                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-                    new[] { "application/octet-stream" });
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            })
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            {
+                options.LoginPath = "/auth/login";
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Ensure cookies are sent only over HTTPS
+            })
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                };
             });
+        builder.Services.AddEndpointsApiExplorer();
 
-            var app = builder.Build();
+        #endregion
 
-            app.UseAuthentication();
+        var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseWebAssemblyDebugging();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-                app.UseHsts();
-            }
+        app.UseRouting();
 
-            app.UseBlazorFrameworkFiles();
-            app.UseStaticFiles();
+        app.UseAuthentication();
+        app.UseAuthorization();
 
-            app.UseRouting();
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers(); // Ensure controllers are being mapped
+        });
 
-            app.UseAuthorization();  // Add this line
+        app.UseExceptionHandler("/Error");
+        app.UseHsts();
+        app.UseHttpsRedirection();
+        app.UseCors(policy => policy.WithOrigins("*").AllowAnyMethod().WithHeaders(HeaderNames.ContentType));
 
-            // Use response compression middleware
-            app.UseResponseCompression();
+        app.UseWebAssemblyDebugging();
+        app.UseBlazorFrameworkFiles();
+        app.UseStaticFiles();
 
-            app.UseHttpsRedirection();
+        // Use response compression middleware
+        app.UseResponseCompression();
 
-            // Use Swagger middleware
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Cars Management API v1");
-            });
+        // Use Swagger
+        app.UseSwagger();
+        app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Cars Management API v1"); });
 
-            // Use health checks middleware
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapHealthChecks("/health");
-                endpoints.MapControllers();
-            });
+        app.MapFallbackToFile("index.html");
 
-            app.MapFallbackToFile("index.html");
-
-            app.Run();
-        }
+        app.Run();
     }
 }

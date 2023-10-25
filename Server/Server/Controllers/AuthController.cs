@@ -1,14 +1,18 @@
-﻿using System.Security.Claims;
-using AutoMapper;
+﻿using AutoMapper;
 using CarsManagement.Server.Application;
 using CarsManagement.Server.Domain.Entities;
+using CarsManagement.Server.Presentation.AuthChainOfResponsibility.Login;
+using CarsManagement.Server.Presentation.AuthChainOfResponsibility.Registration;
 using CarsManagement.Shared.DTO;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Annotations;
-using static BCrypt.Net.BCrypt;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace CarsManagement.Server.Presentation.Controllers;
 
@@ -16,15 +20,8 @@ namespace CarsManagement.Server.Presentation.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private ILogger<AuthController> Logger { get; set; }
-
-    private IRepository<ManagerModel> Repository { get; set; }
-
-    private IMapper Mapper { get; }
-
-    private IOptions<ApiSettings> Settings { get; set; }
-
-    public AuthController(ILogger<AuthController> logger, IRepository<ManagerModel> repository, IMapper mapper, IOptions<ApiSettings> options)
+    public AuthController(ILogger<AuthController> logger, IRepository<ManagerModel> repository, IMapper mapper,
+        IOptions<ApiSettings> options)
     {
         Logger = logger;
         Repository = repository;
@@ -32,104 +29,103 @@ public class AuthController : ControllerBase
         Settings = options;
     }
 
+    private ILogger<AuthController> Logger { get; }
+
+    private IRepository<ManagerModel> Repository { get; }
+
+    private IMapper Mapper { get; }
+
+    private IOptions<ApiSettings> Settings { get; set; }
+
     /// <summary>
-    /// Logs in a user.
+    ///     Logs in a user.
     /// </summary>
     /// <param name="request">The login request.</param>
     /// <returns>Returns a status indicating the result of the login attempt.</returns>
     [HttpPost("login")]
-    [SwaggerOperation(Summary = "Logs in a user.", Description = "Logs in a user and returns a status indicating the result of the login attempt.")]
+    [ApiExplorerSettings(IgnoreApi = true)]  // Hide this endpoint from Swagger
+    [SwaggerOperation(Summary = "Logs in a user.",
+        Description = "Logs in a user and returns a status indicating the result of the login attempt.")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
         try
         {
             Logger.LogInformation("Login attempt for user {Username}", request.Username);
 
-            var managerData = Repository.GetItems().FirstOrDefault(x => x.AccountName == request.Username);
-
-            if (managerData != null)
+            var context = new AuthContext
             {
-                if (Verify(request.Password, managerData.PasswordHash))
-                {
-                    Logger.LogInformation("Password matched for user {Username}", request.Username);
-
-                    var claims = new List<Claim> { new(ClaimTypes.Name, request.Username) };
-
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                    var authProperties = new AuthenticationProperties { AllowRefresh = true, IsPersistent = true, IssuedUtc = DateTimeOffset.Now };
-
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-
-                    return new ObjectResult("Login successful")
-                    {
-                        StatusCode = 200
-                    };
-                }
-
-                Logger.LogWarning("Password mismatch for user {Username}", request.Username);
-
-                return new ObjectResult("Password Incorrect")
-                {
-                    StatusCode = 401
-                };
-            }
-
-            Logger.LogWarning("No user found with username {Username}", request.Username);
-
-            return new ObjectResult("Username Incorrect or User is not exist")
-            {
-                StatusCode = 401
+                Logger = Logger,
+                Repository = Repository,
+                HttpContext = HttpContext,
+                LoginRequest = request
             };
+            var handler = new UserValidationHandler();
+            return await handler.HandleAsync(context);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error occurred while logging in user {Username}", request.Username);
+            Logger.LogError($"Error occurred while logging in user {request.Username}. Exception: {ex.Message}");
+            return StatusCode(500, "Internal server error");
+        }
+    }
 
+    [HttpPost("SwaggerLogin")]
+    [SwaggerOperation(Summary = "Logs in a user for Swagger.",
+        Description = "Logs in a user for Swagger and returns a JWT token.")]
+    public async Task<IActionResult> LoginForSwagger([FromBody] LoginRequest request)
+    {
+        try
+        {
+            Logger.LogInformation("Login attempt for Swagger user {Username}", request.Username);
+
+            var context = new AuthContext
+            {
+                Logger = Logger,
+                Repository = Repository,
+                HttpContext = HttpContext,
+                LoginRequest = request
+            };
+            var handler = new UserValidationHandler();
+            var result = await handler.HandleAsync(context);
+
+            if (result is OkObjectResult okResult)
+            {
+                var token = GenerateJwtToken(request.Username);
+                return Ok(new { token });
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Error occurred while logging in Swagger user {request.Username}. Exception: {ex.Message}");
             return StatusCode(500, "Internal server error");
         }
     }
 
     /// <summary>
-    /// Registers a new user.
+    ///     Registers a new user.
     /// </summary>
     /// <param name="request">The registration request.</param>
     /// <returns>Returns a status indicating the result of the registration attempt.</returns>
     [HttpPost("register")]
-    [SwaggerOperation(Summary = "Registers a new user.", Description = "Registers a new user and returns a status indicating the result of the registration attempt.")]
+    [SwaggerOperation(Summary = "Registers a new user.",
+        Description = "Registers a new user and returns a status indicating the result of the registration attempt.")]
     public async Task<IActionResult> Register(RegistrationRequest request)
     {
         try
         {
             Logger.LogInformation($"Registration attempt for user {request.Username}");
 
-            var managerData = Repository.GetItems().FirstOrDefault(x => x.AccountName == request.Username);
-
-            if (managerData == null)
+            var context = new AuthContext
             {
-                var hashedPassword = HashPassword(request.Password);
-
-                Repository.Add(new ManagerModel() { AccountName = request.Username, PasswordHash = hashedPassword });
-
-                Logger.LogInformation($"User {request.Username} registered successfully");
-
-                var claims = new List<Claim> { new Claim(ClaimTypes.Name, request.Username) };
-
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-                var authProperties = new AuthenticationProperties { AllowRefresh = true, IsPersistent = true, IssuedUtc = DateTimeOffset.Now };
-
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-
-                return Ok();
-            }
-
-            Logger.LogWarning($"User with username {request.Username} already exists");
-
-            return new ObjectResult("User already exist")
-            {
-                StatusCode = 401
+                Logger = Logger,
+                Repository = Repository,
+                HttpContext = HttpContext,
+                RegistrationRequest = request
             };
+            var handler = new NewUserValidationHandler();
+            return await handler.HandleAsync(context);
         }
         catch (Exception ex)
         {
@@ -139,12 +135,14 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Logout a new user.
+    ///     Logout a new user.
     /// </summary>
     /// <param name="request">The Logout request.</param>
     /// <returns>Returns a status indicating the result of the logout attempt otherwise return server error code.</returns>
     [HttpPost("logout")]
-    [SwaggerOperation(Summary = "Registers a new user.", Description = "Registers a new user and returns a status indicating the result of the registration attempt.")]
+    [ApiExplorerSettings(IgnoreApi = true)]  // Hide this endpoint from Swagger
+    [SwaggerOperation(Summary = "Registers a new user.",
+        Description = "Registers a new user and returns a status indicating the result of the registration attempt.")]
     public async Task<IActionResult> Logout()
     {
         try
@@ -163,5 +161,29 @@ public class AuthController : ControllerBase
 
             return StatusCode(500, "Internal server error");
         }
+    }
+
+    private string GenerateJwtToken(string username)
+    {
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Settings.Value.JwtKey));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, username),
+            // Add other claims as needed
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: Settings.Value.JwtIssuer,
+            audience: Settings.Value.JwtAudience,
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(30), // or whatever expiration time you want
+            signingCredentials: credentials
+        );
+
+        
+        var handler = new JwtSecurityTokenHandler().WriteToken(token);
+        return handler;
     }
 }

@@ -12,9 +12,8 @@
                 {
                     var spots = ParkingLot.ParkingSpots.Skip(row * 10).Take(10).ToList();
 
-                    Console.WriteLine($"Building row for such lot: {ParkingLot}");
-                    Console.WriteLine($"Extracted spots from lot: {spots.Count}");
-
+@*                     Console.WriteLine($"Building row for such lot: {ParkingLot}");
+                    Console.WriteLine($"Extracted spots from lot: {spots.Count}"); *@
                     @if (row % 2 == 0)
                     {
                         <SpotsRow AvailableSpots="@AvailableSpots" SelectedSpot="@SelectedSpot" ParkingSpots="@spots" Margin="mb-"/>
@@ -38,6 +37,6 @@
     public List<int> AvailableSpots { get; set; }
 
     [Parameter]
-    public int SelectedSpot { get; set; }
+    public int? SelectedSpot { get; set; }
 
 }

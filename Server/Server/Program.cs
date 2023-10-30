@@ -4,10 +4,10 @@ using CarsManagement.Server.Application.Repositories;
 using CarsManagement.Server.Domain;
 using CarsManagement.Server.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
 
@@ -30,8 +30,8 @@ public class Program
 #if DEBUG
             options.UseInMemoryDatabase("CarsManagement");
 #else
-                var connectionString = builder.Configuration.GetSection("ConnectionString").Value;
-                options.UseSqlServer(connectionString);
+            var connectionString = builder.Configuration.GetSection("ConnectionString").Value;
+            options.UseSqlServer(connectionString);
 #endif
             options.EnableDetailedErrors();
             options.EnableSensitiveDataLogging();
@@ -40,8 +40,6 @@ public class Program
         builder.Services.AddScoped<IRepository<ManagerModel>, ManagersRepository>();
         builder.Services.AddScoped<IRepository<LotModel>, ParkingLotsRepository>();
         builder.Services.AddScoped<IRepository<SpotModel>, ParkingSpotsRepository>();
-        builder.Services.AddScoped<IRepository<CarModel>, CarsRepository>();
-        builder.Services.AddScoped<IRepository<TicketModel>, TicketsRepository>();
 
         #endregion
 
@@ -70,56 +68,16 @@ public class Program
         builder.Services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "Cars Management API", Version = "v1" });
-
-            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                In = ParameterLocation.Header,
-                Description = "Please insert JWT token into field",
-                Name = "Authorization",
-                Type = SecuritySchemeType.Http,
-                BearerFormat = "JWT",
-                Scheme = "bearer"
-            });
-
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    new string[] { }
-                }
-            });
         });
-        builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-            })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+
+        // Configure cookie-based authentication
+        builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
             {
                 options.LoginPath = "/auth/login";
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Ensure cookies are sent only over HTTPS
-            })
-            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-                };
             });
+
         builder.Services.AddEndpointsApiExplorer();
 
         #endregion

@@ -8,5 +8,5 @@ public class ManagerModel
 
     public string PasswordHash { get; set; }
 
-    public ICollection<LotModel> ManagedParkingLots { get; set; } = new List<LotModel>();
+    public ICollection<LotModel> ManagedParkingLots { get; set; }
 }

@@ -31,7 +31,7 @@ public class ManagersRepository : IRepository<ManagerModel>
         {
             Logger.LogWarning("No manager found with id {Id}", id);
 
-            return null; // or throw an exception if appropriate
+            return null;
         }
 
 
@@ -40,8 +40,15 @@ public class ManagersRepository : IRepository<ManagerModel>
 
     public List<ManagerModel> GetItems()
     {
-        var entities = _context.Managers.AsNoTracking().Include(x => x.ManagedParkingLots)
-            .ThenInclude(y => y.ParkingSpots).ThenInclude(z => z.ParkedCar).ThenInclude(v => v.Ticket).ToList();
+        var entities = _context.Managers
+            .AsNoTracking()
+            .Include(x => x.ManagedParkingLots)
+                .ThenInclude(y => y.ParkingSpots)
+                    .ThenInclude(c => c.Ticket)
+            .Include(x => x.ManagedParkingLots)
+                .ThenInclude(y => y.ParkingSpots)
+                    .ThenInclude(c => c.ParkedCar)
+            .ToList();
 
         return entities;
         Mapper.Map<List<ManagerDTO>>(entities);
@@ -49,34 +56,27 @@ public class ManagersRepository : IRepository<ManagerModel>
 
     public void Add(ManagerModel item)
     {
-        //var entity = Mapper.Map<ManagerModel>(item);
-
         _context.Managers.Add(item);
         _context.SaveChanges();
     }
 
     public void Update(ManagerModel item)
     {
-        //var entity = Mapper.Map<ManagerModel>(item);
-
         _context.Managers.Update(item);
         _context.SaveChanges();
     }
 
     public void AddOrUpdate(ManagerModel item)
     {
-        //var entity = Mapper.Map<ManagerModel>(item);
-
         var existingManager = _context.Managers
             .AsNoTracking()
             .FirstOrDefault(p => p.AccountName == item.AccountName);
 
         if (existingManager != null)
-            // Update the entity if it exists
             _context.Entry(existingManager).CurrentValues.SetValues(item);
         else
-            // Add the entity if it doesn't exist
             _context.Managers.Add(item);
+
         _context.SaveChanges();
     }
 

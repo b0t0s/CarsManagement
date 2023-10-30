@@ -1,0 +1,17 @@
+﻿<input type="date" class="form-control mb-2" min="@minDate" @onchange="OnDateChanged" />
+
+@code {
+    private DateTime selectedDate = DateTime.Now;
+    private string minDate => DateTime.Now.ToString("yyyy-MM-dd");
+
+    [Parameter] public EventCallback<DateTime> DateSelected { get; set; }
+
+    private void OnDateChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var newDate))
+        {
+            selectedDate = newDate;
+            DateSelected.InvokeAsync(selectedDate);
+        }
+    }
+}

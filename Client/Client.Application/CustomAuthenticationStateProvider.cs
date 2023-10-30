@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 
-namespace CarsManagement.Client;
+namespace CarsManagement.Client.Application;
 
 public class CustomAuthenticationStateProvider : AuthenticationStateProvider
 {

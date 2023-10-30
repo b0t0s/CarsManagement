@@ -32,8 +32,9 @@ public class ParkingLotsRepository : IRepository<LotModel>
 
     public List<LotModel> GetItems()
     {
-        var entities = _context.ParkingLots.AsNoTracking().Include(y => y.ParkingSpots).ThenInclude(z => z.ParkedCar)
-            .ThenInclude(v => v.Ticket).ToList();
+        var entities = _context.ParkingLots.AsNoTracking()
+            .Include(y => y.ParkingSpots).ThenInclude(z => z.ParkedCar)
+            .Include(v => v.ParkingSpots).ThenInclude(z => z.Ticket).ToList();
 
         return entities;
     }

@@ -3,7 +3,7 @@
 namespace CarsManagement.Shared.DTO;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public class CarDTO : BaseDTO
+public class CarDTO
 {
     public string Brand { get; set; }
 
@@ -11,10 +11,8 @@ public class CarDTO : BaseDTO
 
     public string LicensePlate { get; set; }
 
-    public TicketDTO Ticket { get; set; }
-
     public override string ToString()
     {
-        return $"CarId: {Id}, Brand: {Brand}, Model: {Model}, LicensePlate: {LicensePlate}, Ticket: {Ticket}";
+        return $"Brand: {Brand}, Model: {Model}, LicensePlate: {LicensePlate}";
     }
 }

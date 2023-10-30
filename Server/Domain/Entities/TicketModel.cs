@@ -1,11 +1,10 @@
-﻿namespace CarsManagement.Server.Domain.Entities;
+﻿using Microsoft.EntityFrameworkCore;
 
+namespace CarsManagement.Server.Domain.Entities;
+
+[Owned]
 public class TicketModel
 {
-    public int Id { get; set; }
-
-    public CarModel Car { get; set; }
-
     public DateTime EntryTime { get; set; }
 
     public DateTime? ExitTime { get; set; }

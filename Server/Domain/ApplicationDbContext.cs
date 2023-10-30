@@ -20,10 +20,6 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<SpotModel> ParkingSpots { get; set; }
 
-    public DbSet<CarModel> Cars { get; set; }
-
-    public DbSet<TicketModel> ParkingTickets { get; set; }
-
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
     }
@@ -42,23 +38,12 @@ public class ApplicationDbContext : DbContext
             .WithOne()
             .HasForeignKey(ps => ps.LotId);
 
-        // ParkingSpot to Car relationship (one-to-one)
+        //Configure the owned types
         modelBuilder.Entity<SpotModel>()
-            .HasOne(ps => ps.ParkedCar)
-            .WithOne()
-            .HasForeignKey<CarModel>(c => c.Id);
+            .OwnsOne(s => s.ParkedCar);
 
-        // Ensure SpotId is unique across all ParkingSpotModels
         modelBuilder.Entity<SpotModel>()
-            .HasIndex(ps => ps.Id)
-            .IsUnique();
-
-        // Car to Ticket relationship (one-to-one)
-        modelBuilder.Entity<CarModel>()
-            .HasOne(c => c.Ticket)
-            .WithOne(e => e.Car)
-            .HasForeignKey<TicketModel>(e => e.Id)
-            .IsRequired();
+            .OwnsOne(s => s.Ticket);
 
         Debug.WriteLine("Seeding DB...");
 

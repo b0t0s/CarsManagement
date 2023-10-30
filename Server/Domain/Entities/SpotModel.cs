@@ -8,7 +8,7 @@ public class SpotModel
 
     public bool IsOccupied { get; set; }
 
-    public bool IsInclusive { get; set; }
-
     public CarModel? ParkedCar { get; set; }
+
+    public TicketModel? Ticket { get; set; }
 }

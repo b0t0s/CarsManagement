@@ -1,12 +1,13 @@
 ﻿@page "/LotBuilder"
-@using Microsoft.IdentityModel.Tokens
-@using CarsManagement.Shared.Extensions
 @using CarsManagement.Shared.DTO
 @using CarsManagement.Client.Application.Builders
 @using CarsManagement.Client.Components
+@using CarsManagement.Client.Application
+@using System.Text.Json
+@using CarsManagement.Shared.Extensions
 
 @inject IParkingLotBuilder<ParkingLotDTO, ParkingSpotDTO> LotsBuilder
-@inject IParkingSpotBuilder<ParkingSpotDTO> SpotsBuilder
+@inject IParkingSpotBuilder<ParkingSpotDTO, CarDTO, TicketDTO> SpotsBuilder
 
 @inject HttpClient http
 @inject CustomAuthenticationStateProvider AuthStateProvider
@@ -14,68 +15,77 @@
 <PageTitle>LotBuilder</PageTitle>
 
 <!-- Input Form -->
-<div class="input-group mb-3">
-    <input type="text" @bind="LotName" placeholder="Lot Name" class="form-control mb-2"/>
-    <input type="text" @bind="LotLocation" placeholder="Lot Location" class="form-control mb-2"/>
-    <input type="number" min="1" @bind="SpotCount" placeholder="Spots amount" class="form-control mb-2"/>
-    <div class="input-group-append">
-        <button class="btn btn-primary mb-2" @onclick="BuildLot" disabled="@IsSubmitDisabled">Build Lot</button>
+<EditForm Model="ParkingLotModel" OnValidSubmit="BuildLot">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="input-group mb-3">
+        <input type="text" @bind="ParkingLotModel.LotName" placeholder="Lot Name" class="form-control mb-2" />
+        <input type="text" @bind="ParkingLotModel.LotLocation" placeholder="Lot Location" class="form-control mb-2" />
+        <input type="number" min="1" @bind="ParkingLotModel.SpotCount" placeholder="Spots amount" class="form-control mb-2" />
+        <div class="input-group-append">
+            <button class="btn btn-primary mb-2" type="submit">Build Lot</button>
+        </div>
     </div>
-</div>
+</EditForm>
 
 <div>
-    @if (ParkingLot != null && !ParkingLot.ParkingSpots.IsNullOrEmpty())
+    @if (ParkingLot != null && ParkingLot.ParkingSpots.Count > 0)
     {
-        <SpotsTable ParkingLot="ParkingLot" AvailableSpots="ParkingLot.GetAvailableSpotIds()" SelectedSpot="-1"/>
+        <SpotsTable ParkingLot="ParkingLot" AvailableSpots="ParkingLot.GetAvailableSpotIds()" SelectedSpot="-1" />
     }
 </div>
 
 @code {
+    public ParkingLotDTO ParkingLot { get; set; } = new ParkingLotDTO();
+    public ManagerDTO Manager { get; set; }
+    public ParkingLotModel ParkingLotModel { get; set; } = new ParkingLotModel();
 
     protected override async Task OnInitializedAsync()
     {
-        Manager = await http.GetFromJsonAsync<ManagerDTO>($"/Managers/Manager/Name/{AuthStateProvider.User.Identity.Name}");
+        Manager = await http.GetFromJsonAsync<ManagerDTO>($"/Managers/Manager/Name/{AuthStateProvider.User.Identity.Name}") ?? new ManagerDTO();
     }
-
-    public ParkingLotDTO? ParkingLot { get; set; } = new();
-
-    public ManagerDTO Manager { get; set; }
-
-    public int SpotCount { get; set; }
-
-    public string LotName { get; set; }
-
-    public string LotLocation { get; set; }
-
-    public bool IsSubmitDisabled => string.IsNullOrEmpty(LotName) || string.IsNullOrEmpty(LotLocation) || SpotCount <= 0;
-
-    private void BuildLot()
+    private async Task BuildLot()
     {
         var spots = new List<ParkingSpotDTO>();
 
-        for (var i = 0; i < SpotCount; i++)
+        for (var i = 0; i < ParkingLotModel.SpotCount; i++)
         {
             var spot = SpotsBuilder.SetSpotId(i).Build();
 
-            if (i % 10 == 0)
-            {
-                spot = SpotsBuilder.SetSpotId(i).SetIsInclusive(true).Build();
-            }
-            else
-            {
-                spot = SpotsBuilder.SetSpotId(i).SetIsInclusive(false).Build();
-            }
+            spot = SpotsBuilder
+                .SetSpotId(i)
+                .SetCar(null)
+                .SetTicket(null)
+                .Build();
 
             spots.Add(spot);
         }
 
         ParkingLot = LotsBuilder
-            .SetLotId(1)
-            .SetManagerId(Manager.ManagerId)
-            .SetLotName(LotName)
-            .SetLotLocation(LotLocation)
+            .SetManagerId(Manager.Id)
+            .SetLotName(ParkingLotModel.LotName)
+            .SetLotLocation(ParkingLotModel.LotLocation)
             .SetLotsSpots(spots)
             .Build();
+
+        Manager.ManagedParkingLots.Add(ParkingLot);
+
+        Manager.AccountName = AuthStateProvider.User.Identity.Name;
+
+        var response = await http.PutAsJsonAsync($"/Managers/{Manager.Id}", Manager);
+
+        Console.WriteLine(response);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Parking successful");
+        }
+        else
+        {
+            Console.WriteLine("Failed to park the car");
+        }
+
     }
 
 }

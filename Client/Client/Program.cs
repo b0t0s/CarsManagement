@@ -1,3 +1,4 @@
+using CarsManagement.Client.Application;
 using CarsManagement.Client.Application.Builders;
 using CarsManagement.Client.BuildersImplementation;
 using CarsManagement.Shared.DTO;
@@ -24,7 +25,7 @@ public class Program
 
         builder.Services.AddScoped<IParkingManagerBuilder<ManagerDTO, ParkingLotDTO>, ParkingManagerBuilder>();
         builder.Services.AddScoped<IParkingLotBuilder<ParkingLotDTO, ParkingSpotDTO>, ParkingLotBuilder>();
-        builder.Services.AddScoped<IParkingSpotBuilder<ParkingSpotDTO>, ParkingSpotBuilder>();
+        builder.Services.AddScoped<IParkingSpotBuilder<ParkingSpotDTO, CarDTO, TicketDTO>, ParkingSpotBuilder>();
         builder.Services.AddScoped<ICarBuilder<CarDTO, TicketDTO>, CarBuilder>();
 
         // Register authorization services

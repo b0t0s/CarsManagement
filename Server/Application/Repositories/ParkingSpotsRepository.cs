@@ -32,7 +32,9 @@ public class ParkingSpotsRepository : IRepository<SpotModel>
 
     public List<SpotModel> GetItems()
     {
-        var entities = _context.ParkingSpots.AsNoTracking().Include(z => z.ParkedCar).ThenInclude(v => v.Ticket)
+        var entities = _context.ParkingSpots.AsNoTracking()
+            .Include(z => z.ParkedCar)
+            .Include(v => v.Ticket)
             .ToList();
 
         return entities;
@@ -40,24 +42,18 @@ public class ParkingSpotsRepository : IRepository<SpotModel>
 
     public void Add(SpotModel item)
     {
-        //var entity = Mapper.Map<SpotModel>(item);
-
         _context.ParkingSpots.Add(item);
         _context.SaveChanges();
     }
 
     public void Update(SpotModel item)
     {
-        //var entity = Mapper.Map<SpotModel>(item);
-
         _context.ParkingSpots.Update(item);
         _context.SaveChanges();
     }
 
     public void AddOrUpdate(SpotModel item)
     {
-        //var entity = Mapper.Map<SpotModel>(item);
-
         var existingSpot = _context.ParkingSpots
             .AsNoTracking()
             .FirstOrDefault(p => p.Id == item.Id);

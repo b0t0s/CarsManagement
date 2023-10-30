@@ -7,12 +7,6 @@ public class CarBuilder : ICarBuilder<CarDTO, TicketDTO>
 {
     private CarDTO _car = new();
 
-    public ICarBuilder<CarDTO, TicketDTO> SetId(int spotId)
-    {
-        _car.Id = spotId;
-        return this;
-    }
-
     public ICarBuilder<CarDTO, TicketDTO> SetBrand(string brand)
     {
         _car.Brand = brand;
@@ -28,12 +22,6 @@ public class CarBuilder : ICarBuilder<CarDTO, TicketDTO>
     public ICarBuilder<CarDTO, TicketDTO> SetLicensePlate(string licensePlate)
     {
         _car.LicensePlate = licensePlate;
-        return this;
-    }
-
-    public ICarBuilder<CarDTO, TicketDTO> SetTicket(TicketDTO ticket)
-    {
-        _car.Ticket = ticket;
         return this;
     }
 

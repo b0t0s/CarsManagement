@@ -9,9 +9,9 @@ public class ParkingLotDTO : BaseDTO
 
     public int ManagerId { get; set; }
 
-    public string LotName { get; set; } = "Name";
+    public string LotName { get; set; }
 
-    public string LotLocation { get; set; } = "Location";
+    public string LotLocation { get; set; }
 
     public List<ParkingSpotDTO> ParkingSpots { get; set; } = new();
 

@@ -7,12 +7,12 @@ public class ParkingSpotDTO : BaseDTO
 {
     public bool IsOccupied { get; set; }
 
-    public bool IsInclusive { get; set; }
-
     public CarDTO? ParkedCar { get; set; }
+
+    public TicketDTO? Ticket { get; set; }
 
     public override string ToString()
     {
-        return $"SpotId: {Id}, IsOccupied: {IsOccupied}, IsInclusive: {IsInclusive}, ParkedCar: {ParkedCar}";
+        return $"SpotId: {Id}, IsOccupied: {IsOccupied}, ParkedCar: {ParkedCar}, TicketInfo: {Ticket}";
     }
 }

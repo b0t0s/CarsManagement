@@ -96,9 +96,8 @@ public class AuthController : ControllerBase
     /// <param name="request">The Logout request.</param>
     /// <returns>Returns a status indicating the result of the logout attempt otherwise return server error code.</returns>
     [HttpPost("logout")]
-    [ApiExplorerSettings(IgnoreApi = true)]  // Hide this endpoint from Swagger
-    [SwaggerOperation(Summary = "Registers a new user.",
-        Description = "Registers a new user and returns a status indicating the result of the registration attempt.")]
+    [SwaggerOperation(Summary = "Logout user.",
+        Description = "Logout user and returns a status indicating the result of attempt.")]
     public async Task<IActionResult> Logout()
     {
         try

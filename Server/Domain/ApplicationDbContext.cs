@@ -38,7 +38,6 @@ public class ApplicationDbContext : DbContext
             .WithOne()
             .HasForeignKey(ps => ps.LotId);
 
-        //Configure the owned types
         modelBuilder.Entity<SpotModel>()
             .OwnsOne(s => s.ParkedCar);
 

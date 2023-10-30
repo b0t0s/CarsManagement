@@ -41,8 +41,6 @@ public class ParkingLotsRepository : IRepository<LotModel>
 
     public void Add(LotModel item)
     {
-        //var entity = Mapper.Map<LotModel>(item);
-
         _context.ParkingLots.Add(item);
         _context.SaveChanges();
     }
@@ -52,23 +50,6 @@ public class ParkingLotsRepository : IRepository<LotModel>
         var entity = Mapper.Map<LotModel>(item);
 
         _context.ParkingLots.Update(item);
-        _context.SaveChanges();
-    }
-
-    public void AddOrUpdate(LotModel item)
-    {
-        //var entity = Mapper.Map<LotModel>(item);
-
-        var parkingLot = _context.ParkingLots
-            .AsNoTracking()
-            .FirstOrDefault(p => p.Id == item.Id);
-
-        if (parkingLot != null)
-            // Update the entity if it exists
-            _context.Entry(parkingLot).CurrentValues.SetValues(item);
-        else
-            // Add the entity if it doesn't exist
-            _context.ParkingLots.Add(item);
         _context.SaveChanges();
     }
 

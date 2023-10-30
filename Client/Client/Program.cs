@@ -18,7 +18,6 @@ public class Program
 
         builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-        // Register the AuthenticationStateProvider service
         builder.Services.AddScoped<CustomAuthenticationStateProvider>();
         builder.Services.AddScoped<AuthenticationStateProvider>(s =>
             s.GetRequiredService<CustomAuthenticationStateProvider>());
@@ -28,7 +27,6 @@ public class Program
         builder.Services.AddScoped<IParkingSpotBuilder<ParkingSpotDTO, CarDTO, TicketDTO>, ParkingSpotBuilder>();
         builder.Services.AddScoped<ICarBuilder<CarDTO, TicketDTO>, CarBuilder>();
 
-        // Register authorization services
         builder.Services.AddAuthorizationCore();
 
         await builder.Build().RunAsync();

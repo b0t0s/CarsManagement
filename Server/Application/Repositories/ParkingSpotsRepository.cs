@@ -52,21 +52,6 @@ public class ParkingSpotsRepository : IRepository<SpotModel>
         _context.SaveChanges();
     }
 
-    public void AddOrUpdate(SpotModel item)
-    {
-        var existingSpot = _context.ParkingSpots
-            .AsNoTracking()
-            .FirstOrDefault(p => p.Id == item.Id);
-
-        if (existingSpot != null)
-            // Update the entity if it exists
-            _context.Entry(existingSpot).CurrentValues.SetValues(item);
-        else
-            // Add the entity if it doesn't exist
-            _context.ParkingSpots.Add(item);
-        _context.SaveChanges();
-    }
-
     public void Delete(int id)
     {
         var spot = _context.ParkingSpots.Find(id);

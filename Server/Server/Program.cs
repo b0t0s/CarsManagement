@@ -94,7 +94,6 @@ public class Program
             endpoints.MapControllers(); // Ensure controllers are being mapped
         });
 
-        app.UseExceptionHandler("/Error");
         app.UseHsts();
         app.UseHttpsRedirection();
         app.UseCors(policy => policy.WithOrigins("*").AllowAnyMethod().WithHeaders(HeaderNames.ContentType));
@@ -103,10 +102,8 @@ public class Program
         app.UseBlazorFrameworkFiles();
         app.UseStaticFiles();
 
-        // Use response compression middleware
         app.UseResponseCompression();
 
-        // Use Swagger
         app.UseSwagger();
         app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Cars Management API v1"); });
 

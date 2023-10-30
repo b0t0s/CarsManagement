@@ -49,7 +49,7 @@ System have capabilities to login and register.
 
 ### Database Configuration
 
-Explain how to switch between in-memory and SQL database configurations, and any necessary setup for the SQL database.
+Switch between in-memory and SQL database configurations, is controlled by Debug and Release configurations in VS.
 
 Contributing
 ------------
